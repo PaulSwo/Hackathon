@@ -32,6 +32,9 @@ class UI:
         self.new_face_img = Label(self.small_component_frame)
         self.new_face_img.pack(side=LEFT, padx=5)
 
+        self.listButton = Button(self.root, text="View humans", command=self.openListView)
+        self.listButton.pack(side=RIGHT, padx=5)
+
         self.small_component_frame.pack_forget()
 
 
@@ -83,6 +86,12 @@ class UI:
 
             self.popup.destroy()
 
+
+    def openListView(self):
+        self.listViewPopup = Toplevel(self.root)
+        self.listViewPopup.title("List of Known Faces")
+
+        
 
     def destroy(self):
         root.quit()
