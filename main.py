@@ -1,8 +1,7 @@
 import facerecognition
 import ui
 
-fr = facerecognition.FaceRecognition()
+frame = ui.UI()
+fr = facerecognition.FaceRecognition(frame)
 
-frame = ui.UI(fr)
-
-frame.showUI()
+fr.loop()

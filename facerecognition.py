@@ -12,7 +12,7 @@ class FaceRecognition:
     known_face_encodings = []
     known_face_names = []
 
-    def __init__(self):
+    def __init__(self, frame):
         self.video_capture = cv2.VideoCapture(0)
         if not self.video_capture.isOpened():
             print("Camera could not be opened")
@@ -21,6 +21,12 @@ class FaceRecognition:
         for filename in os.listdir(self.faces_folder):
             self.add_face(filename.split(".")[0], os.path.join(self.faces_folder, filename))
 
+        self.frame = frame
+
+        self.frame.addFaceCallback = self.addFaceCallback
+
+        face_recognition.cpus = 8
+
 
     def add_face(self, name, image_path):
         image = face_recognition.load_image_file(image_path)
@@ -28,7 +34,17 @@ class FaceRecognition:
 
         self.known_face_encodings.append(face_encoding)
         self.known_face_names.append(name)
+
+    def addFaceCallback(self, name, img_path):
+        self.add_face(name, img_path)
         
+
+    def loop(self):
+        while True:
+            img = self.get_frame()
+            self.frame.setImage(img)
+
+        self.frame.destroy()
 
     def get_frame(self):
         # Initialize some variables
@@ -37,41 +53,47 @@ class FaceRecognition:
         face_names = []
         process_this_frame = True
 
-        frame_size = 0.33
+        frame_size = 0.25
 
         # Grab a single frame of video
         ret, frame = self.video_capture.read()
 
-        # Only process every other frame of video to save time
-        if process_this_frame:
-            # Resize frame of video to 1/4 size for faster face recognition processing
-            small_frame = cv2.resize(frame, (0, 0), fx=frame_size, fy=frame_size)
+        #contains face encodings that are not known to make them addable
+        unknown_face_encodings = []
 
-            # Convert the image from BGR color (which OpenCV uses) to RGB color (which face_recognition uses)
-            rgb_small_frame = small_frame[:, :, ::-1]
-            
-            code = cv2.COLOR_BGR2RGB
-            rgb_small_frame = cv2.cvtColor(rgb_small_frame, code)
-            
-            # Find all the faces and face encodings in the current frame of video
-            face_locations = face_recognition.face_locations(rgb_small_frame)
-            face_encodings = face_recognition.face_encodings(rgb_small_frame, face_locations)
+        # Resize frame of video to 1/4 size for faster face recognition processing
+        small_frame = cv2.resize(frame, (0, 0), fx=frame_size, fy=frame_size)
 
-            face_names = []
-            for face_encoding in face_encodings:
-                # See if the face is a match for the known face(s)
-                matches = face_recognition.compare_faces(self.known_face_encodings, face_encoding)
-                name = "Unknown"
+        # Convert the image from BGR color (which OpenCV uses) to RGB color (which face_recognition uses)
+        rgb_small_frame = small_frame[:, :, ::-1]
+        
+        code = cv2.COLOR_BGR2RGB
+        rgb_small_frame = cv2.cvtColor(rgb_small_frame, code)
+        
+        # Find all the faces and face encodings in the current frame of video
+        face_locations = face_recognition.face_locations(rgb_small_frame)
+        face_encodings = face_recognition.face_encodings(rgb_small_frame, face_locations)
 
-                # Or instead, use the known face with the smallest distance to the new face
-                face_distances = face_recognition.face_distance(self.known_face_encodings, face_encoding)
-                best_match_index = np.argmin(face_distances)
-                if matches[best_match_index]:
-                    name = self.known_face_names[best_match_index]
+        face_names = []
+        for face_encoding in face_encodings:
+            # See if the face is a match for the known face(s)
+            matches = face_recognition.compare_faces(self.known_face_encodings, face_encoding)
+            name = ""
 
-                face_names.append(name)
+            # Or instead, use the known face with the smallest distance to the new face
+            face_distances = face_recognition.face_distance(self.known_face_encodings, face_encoding)
+            best_match_index = np.argmin(face_distances)
+            if matches[best_match_index]:
+                name = self.known_face_names[best_match_index]
 
-        process_this_frame = not process_this_frame
+            if name == "":
+                unknown_face_encodings.append(face_encoding)
+                name = "Unknown " + str(len(unknown_face_encodings))
+
+            face_names.append(name)
+
+        if(len(unknown_face_encodings) == 0):
+            self.frame.hideAddFaceButton()
 
 
         # Display the results
@@ -81,6 +103,13 @@ class FaceRecognition:
             right = right * int(1 / frame_size) + 20
             bottom = bottom * int(1 / frame_size) + 20
             left *= int(1 / frame_size)
+
+
+            if(len(unknown_face_encodings) > 0):
+                if name == "Unknown 1":
+                    cutout_frame = frame[top: bottom, left: right]
+                    array_img = cv2.cvtColor(cutout_frame, cv2.COLOR_BGR2RGBA)
+                    self.frame.showAddFaceButton(self.convertImage(array_img))
 
             # Draw a box around the face
             cv2.rectangle(frame, (left, top), (right, bottom), (255, 255, 255), 2)
@@ -92,8 +121,7 @@ class FaceRecognition:
 
         #convert image so tkinter can display it
         array_img = cv2.cvtColor(frame, cv2.COLOR_BGR2RGBA)
-        img = Image.fromarray(array_img)
-        photo_img = ImageTk.PhotoImage(image=img)
+        photo_img = self.convertImage(array_img)
 
         return photo_img
         
@@ -101,3 +129,9 @@ class FaceRecognition:
     def release(self):
         self.video_capture.release()
         cv2.destroyAllWindows()
+
+
+    def convertImage(self, image):
+        img = Image.fromarray(image)
+        photo_img = ImageTk.PhotoImage(image=img)
+        return photo_img
