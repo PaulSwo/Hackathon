@@ -24,7 +24,7 @@ class FaceRecognition:
 
         self.frame.addFaceCallback = self.addFaceCallback
 
-        face_recognition.cpus = 8
+        face_recognition.cpus = -1
 
     def setup_picam(self):
         self.camera = Picamera2()
@@ -67,6 +67,7 @@ class FaceRecognition:
         # Grab a single frame of video
         #ret, frame = self.camera.read()
         frame = self.camera.capture_array()
+        frame = cv2.flip(frame, 1)
 
         #contains face encodings that are not known to make them addable
         unknown_face_encodings = []
@@ -119,13 +120,14 @@ class FaceRecognition:
                 if name == "Unknown 1":
                     cutout_frame = frame[top: bottom, left: right]
                     #array_img = cv2.cvtColor(cutout_frame, cv2.COLOR_BGR2RGBA)
-                    self.frame.showAddFaceButton(self.convertImage(cutout_frame))
+                    if len(cutout_frame) > 0:
+                        self.frame.showAddFaceButton(self.convertImage(cutout_frame))
 
             # Draw a box around the face
             cv2.rectangle(frame, (left, top), (right, bottom), (255, 255, 255), 2)
 
             # Draw a label with a name below the face
-            cv2.rectangle(frame, (left, bottom - 35), (right, bottom), (255, 255, 255), cv2.FILLED)
+            #cv2.rectangle(frame, (left, bottom - 35), (right, bottom), (255, 255, 255), cv2.FILLED)
             font = cv2.FONT_HERSHEY_DUPLEX
             cv2.putText(frame, name, (left + 6, bottom - 6), font, 1.0, (0, 0, 0), 1)
 
