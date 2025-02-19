@@ -8,28 +8,27 @@ class UI:
 
     def __init__(self):
         self.root = Tk()
-        self.root.bind('<Escape>', lambda e: destroy()) 
+        self.root.bind('<Escape>', lambda e: self.destroy()) 
         self.root.title("Humandex")
-        self.root.minsize(1200, 700)
-        self.root.maxsize(1200, 700)
+        self.root.minsize(480, 800)
+        self.root.maxsize(480, 800)
 
         self.image_label = Label(self.root)
-        self.image_label.config(width=640, height=480)
         self.image_label.pack()
 
-        # Create a frame for the small component
         self.small_component_frame = Frame(self.root)
+        self.small_component_frame.lift(self.image_label)
+        self.small_component_frame.config(width=480, height=200)
         self.small_component_frame.pack(pady=10)
 
-        # Add a text label to the small component
         self.text_label = Label(self.small_component_frame, text="A new face has been detected!")
         self.text_label.pack(side=LEFT, padx=5)
 
-        # Add a button to the small component
         self.toggle_button = Button(self.small_component_frame, text="Add face", command=self.openAppFaceUI)
         self.toggle_button.pack(side=LEFT, padx=5)
 
         self.new_face_img = Label(self.small_component_frame)
+        self.new_face_img.config(width=200, height=200)
         self.new_face_img.pack(side=LEFT, padx=5)
 
         self.listButton = Button(self.root, text="View humans", command=self.openListView)
@@ -91,7 +90,23 @@ class UI:
         self.listViewPopup = Toplevel(self.root)
         self.listViewPopup.title("List of Known Faces")
 
-        
+        frame = Frame(self.listViewPopup)
+        frame.pack()
+
+        # Load images from the 'faces' directory
+        faces_dir = 'faces'
+        images = [f for f in os.listdir(faces_dir) if os.path.isfile(os.path.join(faces_dir, f))]
+
+        # Place images in a grid layout
+        for index, image_file in enumerate(images):
+            img_path = os.path.join(faces_dir, image_file)
+            img = Image.open(img_path)
+            img = img.resize((100, 100), Image.ANTIALIAS)  # Resize image to fit in the grid
+            photo = ImageTk.PhotoImage(img)
+
+            label = Label(frame, image=photo)
+            label.image = photo  # Keep a reference to avoid garbage collection
+            label.grid(row=index // 2, column=index % 2, padx=10, pady=10)
 
     def destroy(self):
-        root.quit()
+        self.root.quit()
