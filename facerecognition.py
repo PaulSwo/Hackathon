@@ -4,6 +4,7 @@ import numpy as np
 from tkinter import *
 from PIL import Image, ImageTk 
 import os
+from picamera2 import Picamera2
 
 class FaceRecognition:
 
@@ -13,10 +14,8 @@ class FaceRecognition:
     known_face_names = []
 
     def __init__(self, frame):
-        self.video_capture = cv2.VideoCapture(0)
-        if not self.video_capture.isOpened():
-            print("Camera could not be opened")
-            exit()
+        
+        self.setup_picam()
 
         for filename in os.listdir(self.faces_folder):
             self.add_face(filename.split(".")[0], os.path.join(self.faces_folder, filename))
@@ -26,6 +25,16 @@ class FaceRecognition:
         self.frame.addFaceCallback = self.addFaceCallback
 
         face_recognition.cpus = 8
+
+    def setup_picam(self):
+        self.camera = Picamera2()
+        self.camera.start(show_preview=False)
+
+    def setup_wincam(self):
+        self.camera = cv2.VideoCapture(0)
+        if not self.camera.isOpened():
+            print("Camera could not be opened")
+            exit()
 
 
     def add_face(self, name, image_path):
@@ -56,7 +65,8 @@ class FaceRecognition:
         frame_size = 0.25
 
         # Grab a single frame of video
-        ret, frame = self.video_capture.read()
+        #ret, frame = self.camera.read()
+        frame = self.camera.capture_array()
 
         #contains face encodings that are not known to make them addable
         unknown_face_encodings = []
@@ -108,8 +118,8 @@ class FaceRecognition:
             if(len(unknown_face_encodings) > 0):
                 if name == "Unknown 1":
                     cutout_frame = frame[top: bottom, left: right]
-                    array_img = cv2.cvtColor(cutout_frame, cv2.COLOR_BGR2RGBA)
-                    self.frame.showAddFaceButton(self.convertImage(array_img))
+                    #array_img = cv2.cvtColor(cutout_frame, cv2.COLOR_BGR2RGBA)
+                    self.frame.showAddFaceButton(self.convertImage(cutout_frame))
 
             # Draw a box around the face
             cv2.rectangle(frame, (left, top), (right, bottom), (255, 255, 255), 2)
@@ -120,15 +130,10 @@ class FaceRecognition:
             cv2.putText(frame, name, (left + 6, bottom - 6), font, 1.0, (0, 0, 0), 1)
 
         #convert image so tkinter can display it
-        array_img = cv2.cvtColor(frame, cv2.COLOR_BGR2RGBA)
-        photo_img = self.convertImage(array_img)
+        #array_img = cv2.cvtColor(frame, cv2.COLOR_BGR2RGBA)
+        photo_img = self.convertImage(frame)
 
         return photo_img
-        
-
-    def release(self):
-        self.video_capture.release()
-        cv2.destroyAllWindows()
 
 
     def convertImage(self, image):
