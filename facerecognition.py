@@ -53,8 +53,6 @@ class FaceRecognition:
             img = self.get_frame()
             self.frame.setImage(img)
 
-        self.frame.destroy()
-
     def get_frame(self):
         # Initialize some variables
         face_locations = []
