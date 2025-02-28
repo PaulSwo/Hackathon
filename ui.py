@@ -8,7 +8,7 @@ class ui:
 
         face_recognition = facerecognition.FaceRecognition()
 
-        face_recognition.setup_picam()
+        face_recognition.setup_wincam()
 
         root = tkinter.Tk()
         root.title("Pokedex")
