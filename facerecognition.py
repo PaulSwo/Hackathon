@@ -5,7 +5,7 @@ from tkinter import *
 from PIL import Image, ImageTk 
 import os
 from subprocess import Popen
-#from picamera2 import Picamera2
+from picamera2 import Picamera2
 
 class FaceRecognition:
 
@@ -148,9 +148,10 @@ class FaceRecognition:
     
     def openAppFaceUI(self, root):
         self.popup = Toplevel(root)
-        self.popup.minsize(480, 400)
-        self.popup.maxsize(480,400)
+        self.popup.minsize(480, 600)
+        self.popup.maxsize(480, 600)
         self.popup.title("Add New Face")
+        self.popup.protocol("WM_DELETE_WINDOW", self.closeNewFaceInput)
 
         Label(self.popup, text="Enter name:").pack(pady=10)
         self.name_entry = Entry(self.popup)
@@ -160,6 +161,7 @@ class FaceRecognition:
         
         self.popup_image_label = Label(self.popup)
         self.popup_image_label.pack(pady=10)
+        self.popup_image_label.config(width=300, height=300)
         self.popup_image_label.photo_image = self.current_face
         self.popup_image_label.config(image=self.current_face)
 
@@ -191,3 +193,7 @@ class FaceRecognition:
     def close_virtual_keyboard(self):
         if self.keyboard: 
             self.keyboard.terminate()
+
+
+    def get_all_faces(self):
+        return [f for f in os.listdir(self.faces_folder) if os.path.isfile(os.path.join(self.faces_folder, f))]
