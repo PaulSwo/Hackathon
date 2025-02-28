@@ -1,8 +1,8 @@
 import facerecognition as fs
-import ui
+import ui as frame
 
-
-ui.open_ui()
+ui = frame.ui()
+ui.open()
 
 # 1. Phase
 

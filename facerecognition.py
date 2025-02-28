@@ -4,7 +4,8 @@ import numpy as np
 from tkinter import *
 from PIL import Image, ImageTk 
 import os
-from picamera2 import Picamera2
+from subprocess import Popen
+#from picamera2 import Picamera2
 
 class FaceRecognition:
 
@@ -13,24 +14,20 @@ class FaceRecognition:
     known_face_encodings = []
     known_face_names = []
 
-    def __init__(self, frame):
-        
-        self.setup_picam()
+    def __init__(self):
 
         for filename in os.listdir(self.faces_folder):
             self.add_face(filename.split(".")[0], os.path.join(self.faces_folder, filename))
 
-        self.frame = frame
-
-        self.frame.addFaceCallback = self.addFaceCallback
-
         face_recognition.cpus = -1
 
     def setup_picam(self):
+        self.is_on_pi = True
         self.camera = Picamera2()
         self.camera.start(show_preview=False)
 
     def setup_wincam(self):
+        self.is_on_pi = False
         self.camera = cv2.VideoCapture(0)
         if not self.camera.isOpened():
             print("Camera could not be opened")
@@ -48,24 +45,28 @@ class FaceRecognition:
         self.add_face(name, img_path)
         
 
-    def loop(self):
-        while True:
-            img = self.get_frame()
-            self.frame.setImage(img)
+    def get_camera_frame(self):
+        # Grab a single frame of video
+        if self.is_on_pi:
+            frame = self.camera.capture_array()
+        else:
+            ret, frame = self.camera.read()
+        # change this based on camera position
+        frame = cv2.flip(frame, 1)
 
-    def get_frame(self):
-        # Initialize some variables
+        if not self.is_on_pi:
+            frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGBA)
+        photo_img = self.convertImage(frame)
+
+        return photo_img
+    
+    def scan_faces_in_frame(self, frame):
+        frame = self.photoimage_to_array(frame)
         face_locations = []
         face_encodings = []
         face_names = []
-        process_this_frame = True
-
+        
         frame_size = 0.25
-
-        # Grab a single frame of video
-        #ret, frame = self.camera.read()
-        frame = self.camera.capture_array()
-        frame = cv2.flip(frame, 1)
 
         #contains face encodings that are not known to make them addable
         unknown_face_encodings = []
@@ -101,9 +102,6 @@ class FaceRecognition:
 
             face_names.append(name)
 
-        if(len(unknown_face_encodings) == 0):
-            self.frame.hideAddFaceButton()
-
 
         # Display the results
         for (top, right, bottom, left), name in zip(face_locations, face_names):
@@ -113,13 +111,9 @@ class FaceRecognition:
             bottom = bottom * int(1 / frame_size) + 20
             left *= int(1 / frame_size)
 
-
-            if(len(unknown_face_encodings) > 0):
-                if name == "Unknown 1":
-                    cutout_frame = frame[top: bottom, left: right]
-                    #array_img = cv2.cvtColor(cutout_frame, cv2.COLOR_BGR2RGBA)
-                    if len(cutout_frame) > 0:
-                        self.frame.showAddFaceButton(self.convertImage(cutout_frame))
+            # save cutout frame of first recognized face
+            cutout_frame = frame[top: bottom, left: right]
+            self.current_face = self.convertImage(cutout_frame)
 
             # Draw a box around the face
             cv2.rectangle(frame, (left, top), (right, bottom), (255, 255, 255), 2)
@@ -130,7 +124,6 @@ class FaceRecognition:
             cv2.putText(frame, name, (left + 6, bottom - 6), font, 1.0, (0, 0, 0), 1)
 
         #convert image so tkinter can display it
-        #array_img = cv2.cvtColor(frame, cv2.COLOR_BGR2RGBA)
         photo_img = self.convertImage(frame)
 
         return photo_img
@@ -140,3 +133,61 @@ class FaceRecognition:
         img = Image.fromarray(image)
         photo_img = ImageTk.PhotoImage(image=img)
         return photo_img
+    
+    def photoimage_to_array(self, photo_image):
+        # Convert PhotoImage to PIL Image
+        pil_image = ImageTk.getimage(photo_image)
+        # Convert PIL Image to NumPy array
+        numpy_array = np.array(pil_image)
+        return numpy_array
+    
+
+    def save_current_face(self, root):
+        self.openAppFaceUI(root)
+
+    
+    def openAppFaceUI(self, root):
+        self.popup = Toplevel(root)
+        self.popup.minsize(480, 400)
+        self.popup.maxsize(480,400)
+        self.popup.title("Add New Face")
+
+        Label(self.popup, text="Enter name:").pack(pady=10)
+        self.name_entry = Entry(self.popup)
+        
+        self.name_entry.pack(pady=10)
+        self.name_entry.focus()
+        
+        self.popup_image_label = Label(self.popup)
+        self.popup_image_label.pack(pady=10)
+        self.popup_image_label.photo_image = self.current_face
+        self.popup_image_label.config(image=self.current_face)
+
+        Button(self.popup, text="Confirm", command=self.confirmNewFaceInput).pack(side=LEFT, padx=10, pady=10)
+        Button(self.popup, text="Cancel", command=self.closeNewFaceInput).pack(side=RIGHT, padx=10, pady=10)
+
+        self.open_virtual_keyboard()
+
+    def closeNewFaceInput(self):
+        self.close_virtual_keyboard()
+        self.popup.destroy()
+
+    def confirmNewFaceInput(self):
+        self.close_virtual_keyboard()
+        name = self.name_entry.get()
+        if name:
+            if not os.path.exists('faces'):
+                os.makedirs('faces')
+            img_path = os.path.join('faces', f"{name}.png")
+            self.popup_image_label.photo_image._PhotoImage__photo.write(img_path)
+
+            self.addFaceCallback(name, img_path)
+
+            self.popup.destroy()
+
+    def open_virtual_keyboard(self):
+        self.keyboard = Popen(["onboard"])
+
+    def close_virtual_keyboard(self):
+        if self.keyboard: 
+            self.keyboard.terminate()
