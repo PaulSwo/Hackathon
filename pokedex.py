@@ -3,7 +3,7 @@ import tkinter
 import os
 import facerecognition
 
-class ui:
+class Pokedex:
     def open(self):
 
         face_recognition = facerecognition.FaceRecognition()
@@ -22,5 +22,5 @@ class ui:
         root.mainloop()
 
 
-pokedex = ui()
+pokedex = Pokedex()
 pokedex.open()
