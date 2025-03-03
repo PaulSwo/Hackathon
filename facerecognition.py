@@ -5,7 +5,7 @@ from tkinter import *
 from PIL import Image, ImageTk 
 import os
 from subprocess import Popen
-from picamera2 import Picamera2
+#from picamera2 import Picamera2
 
 class FaceRecognition:
 
