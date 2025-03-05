@@ -5,7 +5,10 @@ from tkinter import *
 from PIL import Image, ImageTk 
 import os
 from subprocess import Popen
+from enum import Enum
 #from picamera2 import Picamera2
+
+
 
 class FaceRecognition:
 
@@ -60,9 +63,9 @@ class FaceRecognition:
 
         return photo_img
     
-    def scan_faces_in_frame(self, frame):
+    def scan_faces_in_frame(self, frame): #1=kein gesicht, 2=neues gesicht, 3=gefundenes gesicht
         frame = self.photoimage_to_array(frame)
-        face_locations = []
+        face_location = []
         face_encodings = []
         face_names = []
         
@@ -82,29 +85,35 @@ class FaceRecognition:
         
         # Find all the faces and face encodings in the current frame of video
         face_locations = face_recognition.face_locations(rgb_small_frame)
-        face_encodings = face_recognition.face_encodings(rgb_small_frame, face_locations)
+        face_location = ""
+        if(len(face_locations) > 0):
+            face_location = face_locations[0]
+        else:
+            return "No Face"
 
-        face_names = []
-        for face_encoding in face_encodings:
-            # See if the face is a match for the known face(s)
-            matches = face_recognition.compare_faces(self.known_face_encodings, face_encoding)
-            name = ""
+        face_encoding = (face_recognition.face_encodings(rgb_small_frame, [face_location]))[0]
 
-            # Or instead, use the known face with the smallest distance to the new face
-            face_distances = face_recognition.face_distance(self.known_face_encodings, face_encoding)
-            best_match_index = np.argmin(face_distances)
-            if matches[best_match_index]:
-                name = self.known_face_names[best_match_index]
+       
 
-            if name == "":
-                unknown_face_encodings.append(face_encoding)
-                name = "Unknown " + str(len(unknown_face_encodings))
 
-            face_names.append(name)
+        # See if the face is a match for the known face(s)
+        matches = face_recognition.compare_faces(self.known_face_encodings, face_encoding)
+        face_name = ""
+
+        # Or instead, use the known face with the smallest distance to the new face
+        face_distances = face_recognition.face_distance(self.known_face_encodings, face_encoding)
+        best_match_index = np.argmin(face_distances)
+        if matches[best_match_index]:
+            face_name = self.known_face_names[best_match_index]
+
+        if face_name == "":
+            unknown_face_encodings.append(face_encoding)
+            face_name = "Unknown"
+
 
 
         # Display the results
-        for (top, right, bottom, left), name in zip(face_locations, face_names):
+        for (top, right, bottom, left), face_name in zip([face_location], [face_name]):
             # Scale back up face locations since the frame we detected in was scaled to 1/4 size
             top = top * int(1 / frame_size) - 20
             right = right * int(1 / frame_size) + 20
@@ -121,12 +130,12 @@ class FaceRecognition:
             # Draw a label with a name below the face
             #cv2.rectangle(frame, (left, bottom - 35), (right, bottom), (255, 255, 255), cv2.FILLED)
             font = cv2.FONT_HERSHEY_DUPLEX
-            cv2.putText(frame, name, (left + 6, bottom - 6), font, 1.0, (0, 0, 0), 1)
+            cv2.putText(frame, face_name, (left + 6, bottom - 6), font, 1.0, (0, 0, 0), 1)
 
         #convert image so tkinter can display it
-        photo_img = self.convertImage(frame)
+        #photo_img = self.convertImage(frame)
 
-        return photo_img
+        return face_name
 
 
     def convertImage(self, image):
@@ -168,14 +177,14 @@ class FaceRecognition:
         Button(self.popup, text="Confirm", command=self.confirmNewFaceInput).pack(side=LEFT, padx=10, pady=10)
         Button(self.popup, text="Cancel", command=self.closeNewFaceInput).pack(side=RIGHT, padx=10, pady=10)
 
-        self.open_virtual_keyboard()
+        #self.open_virtual_keyboard()
 
     def closeNewFaceInput(self):
-        self.close_virtual_keyboard()
+        #self.close_virtual_keyboard()
         self.popup.destroy()
 
     def confirmNewFaceInput(self):
-        self.close_virtual_keyboard()
+        #self.close_virtual_keyboard()
         name = self.name_entry.get()
         if name:
             if not os.path.exists('faces'):
@@ -185,7 +194,7 @@ class FaceRecognition:
 
             self.addFaceCallback(name, img_path)
 
-            self.popup.destroy()
+            #self.popup.destroy()
 
     def open_virtual_keyboard(self):
         self.keyboard = Popen(["onboard"])
