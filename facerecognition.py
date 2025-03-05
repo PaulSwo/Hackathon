@@ -102,7 +102,7 @@ class FaceRecognition:
 
             face_names.append(name)
 
-
+        frame = cv2.cvtColor(frame, cv2.COLOR_RGB2BGR)  # Convert back to BGR for OpenCV
         # Display the results
         for (top, right, bottom, left), name in zip(face_locations, face_names):
             # Scale back up face locations since the frame we detected in was scaled to 1/4 size
@@ -116,14 +116,15 @@ class FaceRecognition:
             self.current_face = self.convertImage(cutout_frame)
 
             # Draw a box around the face
-            cv2.rectangle(frame, (left, top), (right, bottom), (255, 255, 255), 2)
+            cv2.rectangle(frame, (left, top), (right, bottom), (166, 8, 239), 2)
 
             # Draw a label with a name below the face
-            #cv2.rectangle(frame, (left, bottom - 35), (right, bottom), (255, 255, 255), cv2.FILLED)
+            #cv2.rectangle(frame, (left, bottom - 35), (right, bottom), (0, 0, 255), cv2.FILLED)
             font = cv2.FONT_HERSHEY_DUPLEX
-            cv2.putText(frame, name, (left + 6, bottom - 6), font, 1.0, (0, 0, 0), 1)
+            cv2.putText(frame, name, (left + 6, bottom - 6), font, 1.0, (166, 8, 239), 1)
 
         #convert image so tkinter can display it
+        frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)  # Convert back to BGR for OpenCV
         photo_img = self.convertImage(frame)
 
         return photo_img
@@ -168,10 +169,10 @@ class FaceRecognition:
         Button(self.popup, text="Confirm", command=self.confirmNewFaceInput).pack(side=LEFT, padx=10, pady=10)
         Button(self.popup, text="Cancel", command=self.closeNewFaceInput).pack(side=RIGHT, padx=10, pady=10)
 
-        self.open_virtual_keyboard()
+       # self.open_virtual_keyboard()
 
     def closeNewFaceInput(self):
-        self.close_virtual_keyboard()
+        # self.close_virtual_keyboard()
         self.popup.destroy()
 
     def confirmNewFaceInput(self):
