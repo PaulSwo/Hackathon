@@ -6,6 +6,8 @@ import cv2
 import time
 import facerecognition
 import numpy as np
+import time
+
 
 class Pokedex:
     def open(self):
@@ -169,28 +171,29 @@ class Pokedex:
 
 
     def info_image(self, path_img):
-        self.popup = tk.Toplevel()  # Besser als ein neues Tk-Fenster
-        self.popup.title("Bildinfo")
-        self.popup.geometry("300x300")
+        print("öffne info")
+        self.info_popup = tk.Toplevel()  # Besser als ein neues Tk-Fenster
+        self.info_popup.title("Bildinfo")
+        self.info_popup.geometry("300x300")
 
         file = Image.open(path_img)
-        img = ImageTk.PhotoImage(file)
+        img_info = ImageTk.PhotoImage(file)
 
-        self.image_label = tk.Label(self.popup, image=img)
-        self.image_label.image = img  # Referenz speichern!
-        self.image_label.pack()
-
+        self.image_label_info = tk.Label(self.info_popup, image=img_info)
+        self.image_label_info.image = img_info  # Referenz speichern!
+        self.image_label_info.pack()
 
 
         text_path = path_img.replace("faces/", "txt/").replace(".png", ".txt")
         with open(text_path, "r", encoding="utf-8") as file:
             text = file.read()
 
-        textfeld = tk.Text(self.popup, wrap="word", height=15, width=50, font=("Arial", 12))
+        textfeld = tk.Text(self.info_popup, wrap="word", height=15, width=50, font=("Arial", 12))
         textfeld.pack()
         
         textfeld.insert("1.0", text)
-        print(text)
+        print("schließe print")
+
 
 
 pokedex = Pokedex()

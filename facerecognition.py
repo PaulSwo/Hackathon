@@ -6,6 +6,7 @@ from PIL import Image, ImageTk
 import os
 from subprocess import Popen
 
+
 class FaceRecognition:
 
     faces_folder = "faces"
