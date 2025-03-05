@@ -28,9 +28,6 @@ class Pokedex:
         image.config(image=img)
         image.pack()
 
-        button = Button(root, text="Gesicht speichern", command=lambda: face_recognition.save_current_face(root))
-        button.pack()
-
 
         def update_image():
             frame = face_recognition.get_camera_frame()
