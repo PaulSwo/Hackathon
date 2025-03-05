@@ -5,7 +5,6 @@ from tkinter import *
 from PIL import Image, ImageTk 
 import os
 from subprocess import Popen
-#from picamera2 import Picamera2
 
 class FaceRecognition:
 
@@ -15,9 +14,16 @@ class FaceRecognition:
     known_face_names = []
 
     def __init__(self):
+        # Ensure faces folder exists
+        if not os.path.exists(self.faces_folder):
+            os.makedirs(self.faces_folder)
 
+        # Only add faces from existing images
         for filename in os.listdir(self.faces_folder):
-            self.add_face(filename.split(".")[0], os.path.join(self.faces_folder, filename))
+            try:
+                self.add_face(filename.split(".")[0], os.path.join(self.faces_folder, filename))
+            except Exception as e:
+                print(f"Konnte Gesicht aus {filename} nicht hinzufügen: {e}")
 
         face_recognition.cpus = -1
 
@@ -33,17 +39,25 @@ class FaceRecognition:
             print("Camera could not be opened")
             exit()
 
-
     def add_face(self, name, image_path):
+        # Load image
         image = face_recognition.load_image_file(image_path)
-        face_encoding = face_recognition.face_encodings(image)[0]
-
-        self.known_face_encodings.append(face_encoding)
-        self.known_face_names.append(name)
+        
+        # Find face encodings
+        face_encodings = face_recognition.face_encodings(image)
+        
+        # Check if any faces were found
+        if len(face_encodings) > 0:
+            # Take the first face encoding
+            face_encoding = face_encodings[0]
+            
+            self.known_face_encodings.append(face_encoding)
+            self.known_face_names.append(name)
+        else:
+            print(f"Kein Gesicht in {image_path} gefunden")
 
     def addFaceCallback(self, name, img_path):
         self.add_face(name, img_path)
-        
 
     def get_camera_frame(self):
         # Grab a single frame of video
@@ -102,7 +116,6 @@ class FaceRecognition:
 
             face_names.append(name)
 
-
         # Display the results
         for (top, right, bottom, left), name in zip(face_locations, face_names):
             # Scale back up face locations since the frame we detected in was scaled to 1/4 size
@@ -119,7 +132,6 @@ class FaceRecognition:
             cv2.rectangle(frame, (left, top), (right, bottom), (255, 255, 255), 2)
 
             # Draw a label with a name below the face
-            #cv2.rectangle(frame, (left, bottom - 35), (right, bottom), (255, 255, 255), cv2.FILLED)
             font = cv2.FONT_HERSHEY_DUPLEX
             cv2.putText(frame, name, (left + 6, bottom - 6), font, 1.0, (0, 0, 0), 1)
 
@@ -127,7 +139,6 @@ class FaceRecognition:
         photo_img = self.convertImage(frame)
 
         return photo_img
-
 
     def convertImage(self, image):
         img = Image.fromarray(image)
@@ -140,11 +151,9 @@ class FaceRecognition:
         # Convert PIL Image to NumPy array
         numpy_array = np.array(pil_image)
         return numpy_array
-    
 
     def save_current_face(self, root):
         self.openAppFaceUI(root)
-
     
     def openAppFaceUI(self, root):
         self.popup = Toplevel(root)
@@ -168,14 +177,14 @@ class FaceRecognition:
         Button(self.popup, text="Confirm", command=self.confirmNewFaceInput).pack(side=LEFT, padx=10, pady=10)
         Button(self.popup, text="Cancel", command=self.closeNewFaceInput).pack(side=RIGHT, padx=10, pady=10)
 
-        self.open_virtual_keyboard()
+        #self.open_virtual_keyboard()
 
     def closeNewFaceInput(self):
-        self.close_virtual_keyboard()
+        #self.close_virtual_keyboard()
         self.popup.destroy()
 
     def confirmNewFaceInput(self):
-        self.close_virtual_keyboard()
+        #self.close_virtual_keyboard()
         name = self.name_entry.get()
         if name:
             if not os.path.exists('faces'):
@@ -193,7 +202,6 @@ class FaceRecognition:
     def close_virtual_keyboard(self):
         if self.keyboard: 
             self.keyboard.terminate()
-
 
     def get_all_faces(self):
         return [f for f in os.listdir(self.faces_folder) if os.path.isfile(os.path.join(self.faces_folder, f))]
