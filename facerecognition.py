@@ -2,7 +2,7 @@ import face_recognition
 import cv2
 import numpy as np
 from tkinter import *
-from PIL import Image, ImageTk 
+from PIL import Image, ImageTk
 import os
 from subprocess import Popen
 from enum import Enum
@@ -111,7 +111,7 @@ class FaceRecognition:
             face_name = "Unknown"
 
 
-
+        cutout_frame = ""
         # Display the results
         for (top, right, bottom, left), face_name in zip([face_location], [face_name]):
             # Scale back up face locations since the frame we detected in was scaled to 1/4 size
@@ -129,13 +129,13 @@ class FaceRecognition:
 
             # Draw a label with a name below the face
             #cv2.rectangle(frame, (left, bottom - 35), (right, bottom), (255, 255, 255), cv2.FILLED)
-            font = cv2.FONT_HERSHEY_DUPLEX
-            cv2.putText(frame, face_name, (left + 6, bottom - 6), font, 1.0, (0, 0, 0), 1)
+            #font = cv2.FONT_HERSHEY_DUPLEX
+            #cv2.putText(frame, face_name, (left + 6, bottom - 6), font, 1.0, (0, 0, 0), 1)
 
         #convert image so tkinter can display it
         #photo_img = self.convertImage(frame)
 
-        return face_name
+        return (face_name, cutout_frame)
 
 
     def convertImage(self, image):
