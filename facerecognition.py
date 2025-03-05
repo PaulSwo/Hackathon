@@ -168,14 +168,14 @@ class FaceRecognition:
         Button(self.popup, text="Confirm", command=self.confirmNewFaceInput).pack(side=LEFT, padx=10, pady=10)
         Button(self.popup, text="Cancel", command=self.closeNewFaceInput).pack(side=RIGHT, padx=10, pady=10)
 
-        self.open_virtual_keyboard()
+        #self.open_virtual_keyboard()
 
     def closeNewFaceInput(self):
-        self.close_virtual_keyboard()
+        #self.close_virtual_keyboard()
         self.popup.destroy()
 
     def confirmNewFaceInput(self):
-        self.close_virtual_keyboard()
+        #self.close_virtual_keyboard()
         name = self.name_entry.get()
         if name:
             if not os.path.exists('faces'):
